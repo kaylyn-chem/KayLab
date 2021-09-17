@@ -10,7 +10,6 @@ import sys
 import time
 from datetime import datetime
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 ####################Functions needing Definition##################
@@ -66,10 +65,9 @@ titno=list(range(1,tit_tot))
 titlength=len(titno)
 name = input('Naming Prefix here:\n') or 'E1_'
 if 'u' in shell:
-    path=input('Just hit enter') or "/mnt/c/users/turmi/Documents/data_PD/ben/data2_Titration"
-#"/mnt/c/users/Kaylyn/Onedrive/data_analysis_PD/Python"
+    path=input('This does not work for now') 
 if 'a' in shell:
-    path=input('Paste your file directory here:\n') #or "C:\\Users\\turmi\\Documentsi\\data_PD\Nutromics\\20210611_Data_Long_Duration\\Data_Long_Duration"
+    path=input('Paste your file directory here:\n')
 os.chdir(path)
 
 ###Array Building####
