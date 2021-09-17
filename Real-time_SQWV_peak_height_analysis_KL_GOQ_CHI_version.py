@@ -77,10 +77,10 @@ titno=list(range(1,tit_tot))
 titlength=len(titno)
 name = input('Naming Prefix here:\n') or 'S1_'
 if 'u' in shell:
-    path=input('Just hit enter') or "/mnt/c/users/turmi/Documents/data_PD/ben/data2_Titration"
+    path=input('Just hit enter')
 #"/mnt/c/users/Kaylyn/Onedrive/data_analysis_PD/Python"
 if 'a' in shell:
-    path=input('Paste your file directory here:\n') or "C:\\Users\\turmi\Documents\data_PD\\ben\data2_titration"
+    path=input('Paste your file directory here:\n') 
 os.chdir(path)
 
 ###Array Building####
