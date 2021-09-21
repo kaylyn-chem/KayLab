@@ -78,7 +78,8 @@ timedelta=np.empty([titlength] )
 E_array = np.empty([numfreqs,numelecs,titlength], dtype=object)
 I_array = np.empty([numfreqs,numelecs,titlength], dtype=object)
 I_peak_array=np.empty([numelecs,numfreqs,titlength])
-I_charge_array=np.empty([titlength,numelecs,numfreqs])
+I_charge_array=np.empty([numelecs,titlength,numfreqs])
+I_norm_freq_array=np.empty([numelecs,titlength,numfreqs])
 I_norm_array=np.empty([numelecs,numfreqs,titlength])
 I_init=np.empty([numelecs,numfreqs])
 
@@ -234,7 +235,7 @@ for f in range(tit_tot-1):
 
             #Original had another try and catch loop. No second changes here. Sorry :V
             I_peak_array[h,n-1,f]=max(y-baseline)
-            I_charge_array[f,h,n-1]=max(y-baseline)*10**-6/int(sqwvfreqs[n-1])
+            I_charge_array[h,f,n-1]=max(y-baseline)*10**-6/int(sqwvfreqs[n-1])
         
         ####KDM Calculation and Ratio Calculation#######
         np_index=int(norm_point-1)#normalization point
@@ -243,12 +244,14 @@ for f in range(tit_tot-1):
             for i in range(norm_point):
                 for k in range(numfreqs):
                     I_norm_array[h,k,i]=I_peak_array[h,k,i]/I_init[h,k]
+                    I_norm_freq_array[h,i,k]=I_peak_array[h,k,i]/I_init[h,k]
                 Diff[h,i]=(I_norm_array[h,KDM_hindex,i])-(I_norm_array[h,KDM_lindex,i])
                 Avg[h,i]=0.5*(I_norm_array[h,KDM_hindex,i]+I_norm_array[h,KDM_lindex,i])
                 KDM[h,i]=Diff[h,i]/Avg[h,i]
         elif f>np_index:
             for k in range(numfreqs):
                 I_norm_array[h,k,f]=I_peak_array[h,k,f]/I_init[h,k]
+                I_norm_freq_array[h,f,k]=I_peak_array[h,k,f]/I_init[h,k]
             Diff[h,f]=I_norm_array[h,KDM_hindex,f]-I_norm_array[h,KDM_lindex,f]
             Avg[h,f]=0.5*(I_norm_array[h,KDM_hindex,f]+I_norm_array[h,KDM_lindex,f])
             KDM[h,f]=Diff[h,f]/Avg[h,f]
@@ -257,7 +260,7 @@ for f in range(tit_tot-1):
 
 #########Recording time of datafile########################################
     filename[f]=myfilename
-    filetime=(datetime.fromtimestamp(os.path.getctime(myfilename)))#getctime is for created time, getmtime is for modified time
+    filetime=(datetime.fromtimestamp(os.path.getmtime(myfilename)))#getctime is for created time, getmtime is for modified time
     if f==0:
         filetime0=filetime
     timediff=filetime-filetime0
@@ -287,7 +290,7 @@ plt.show(block=False)
 if brk==1:
     timedelta=timedelta[:-1]
     I_norm_array=I_norm_array[:,:,:-1]
-    I_charge_array=I_charge_array[:-1,:,:]
+    I_charge_array=I_charge_array[:,:-1,:]
     titlength=int(titlength-1)
 
 #######Plot Normalized Currents vs time not in real time
@@ -308,7 +311,7 @@ fig3,axs3=plt.subplots(numelecs,sharex=True,constrained_layout=True, squeeze=Fal
 plt.xlabel(f_label)
 for h in range(numelecs):
     for f in range(titlength):
-        axs3[h,0].plot(sqwvfreqs,I_charge_array[f,h],'o-')
+        axs3[h,0].plot(sqwvfreqs,I_charge_array[h,f],'o-')
     axs3[h,0].set_ylabel(Ch_label)
     axs3[h,0].set_xscale('log')
     axs3[h,0].legend(['E'+str(elec[h])],loc="upper right")
@@ -338,8 +341,18 @@ for h in range(numelecs):
     textfile2.write("Charge_"+freqheaderstr+"\n")
     textfile2.close
     with open(Ch_vs_Freq_file,"ab") as textfile2:
-        for f in range (titlength):
-            np.savetxt(textfile2,I_charge_array[f], delimiter="\t", newline="\n")
+        np.savetxt(textfile2,I_charge_array[h], delimiter="\t")
+####Textfile3. Inorm vs Frequency 
+freqstring='Hz_'.join([str(elem) for elem in sqwvfreqs])
+freqheaderstr='\tI_norm_'.join([str(elem) for elem in sqwvfreqs])
+
+for h in range(numelecs):
+    In_vs_Freq_file="E"+str(elec[h])+"I_norm_vs_Freq"+freqstring+"Hz_.txt"
+    textfile2=open(In_vs_Freq_file,"w")
+    textfile2.write("I_norm_"+freqheaderstr+"\n")
+    textfile2.close
+    with open(In_vs_Freq_file,"ab") as textfile2:
+        np.savetxt(textfile2,I_norm_freq_array[h], delimiter="\t", newline="\n")
 cls()
 print("===============================================")
 print("End of the program. All your data is saved now. Goodbye!")
