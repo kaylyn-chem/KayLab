@@ -78,8 +78,10 @@ timedelta=np.empty([titlength] )
 E_array = np.empty([numfreqs,numelecs,titlength], dtype=object)
 I_array = np.empty([numfreqs,numelecs,titlength], dtype=object)
 I_peak_array=np.empty([numelecs,numfreqs,titlength])
+E_peak_array=np.empty([numelecs,numfreqs,titlength])
 I_charge_array=np.empty([numelecs,titlength,numfreqs])
 I_norm_freq_array=np.empty([numelecs,titlength,numfreqs])
+E_peak_freq_array=np.empty([numelecs,titlength,numfreqs])
 I_norm_array=np.empty([numelecs,numfreqs,titlength])
 I_init=np.empty([numelecs,numfreqs])
 
@@ -161,6 +163,7 @@ for f in range(tit_tot-1):
             E1 = -0.4; E2 = -0.22
         print('Your baseline: ' +str(E1)+' '+str(E2))
         input('Hit enter to continue')
+        plt.close()
 
 ###################Baseline Correction######################################
     peakcurrent=np.empty(numelecs)
@@ -194,6 +197,7 @@ for f in range(tit_tot-1):
                     basefit =np.polyfit([E_array[n,h,f][int(min1_index)],E_array[n,h,f][int(min2_index)]],[poly_y1, poly_y2],1);
                     baseline = np.polyval(basefit,E_peak)
                     y=y[int(min1_index):int(min2_index)+1]
+                    Peak_pot=E_array[n,h,f][int(np.argwhere(y==max(y)))+min1_index]
                 else:
                     #Keeps the parameters the same within the while loop after the first frequency
                     peak= np.argwhere((E_array[n,h,f]>= E1n)&(E_array[n,h,f]<=E2n))#E_array points within E1 and E2
@@ -201,6 +205,7 @@ for f in range(tit_tot-1):
                     E_peak=E_array[n,h,f][int(peak[0]):int(peak[-1])]
                     basefit =np.polyfit([E_peak[0],E_peak[-1]],[y[0], y[-1]],1)
                     baseline=np.polyval(basefit,E_peak)
+                    Peak_pot=E_array[n,h,f][int(np.argwhere(y==max(y)))]
                 
                 #############Visual Inspection time##################
                 plt.figure(5)
@@ -235,6 +240,8 @@ for f in range(tit_tot-1):
 
             #Original had another try and catch loop. No second changes here. Sorry :V
             I_peak_array[h,n-1,f]=max(y-baseline)
+            E_peak_array[h,n-1,f]=Peak_pot
+            E_peak_freq_array[h,f,n-1]=Peak_pot
             I_charge_array[h,f,n-1]=max(y-baseline)*10**-6/int(sqwvfreqs[n-1])
         
         ####KDM Calculation and Ratio Calculation#######
@@ -347,12 +354,23 @@ freqstring='Hz_'.join([str(elem) for elem in sqwvfreqs])
 freqheaderstr='\tI_norm_'.join([str(elem) for elem in sqwvfreqs])
 
 for h in range(numelecs):
-    In_vs_Freq_file="E"+str(elec[h])+"I_norm_vs_Freq"+freqstring+"Hz_.txt"
+    In_vs_Freq_file="E"+str(elec[h])+"_I_norm_vs_Freq"+freqstring+"Hz_.txt"
     textfile2=open(In_vs_Freq_file,"w")
     textfile2.write("I_norm_"+freqheaderstr+"\n")
     textfile2.close
     with open(In_vs_Freq_file,"ab") as textfile2:
         np.savetxt(textfile2,I_norm_freq_array[h], delimiter="\t", newline="\n")
+####Textfile4. E_peak vs Frequency 
+freqstring='Hz_'.join([str(elem) for elem in sqwvfreqs])
+freqheaderstr='\tE_peak_'.join([str(elem) for elem in sqwvfreqs])
+
+for h in range(numelecs):
+    Ep_vs_Freq_file="E"+str(elec[h])+"_E_peak_vs_Freq"+freqstring+"Hz_.txt"
+    textfile2=open(Ep_vs_Freq_file,"w")
+    textfile2.write("E_peak_"+freqheaderstr+"\n")
+    textfile2.close
+    with open(Ep_vs_Freq_file,"ab") as textfile2:
+        np.savetxt(textfile2,E_peak_freq_array[h], delimiter="\t", newline="\n")
 cls()
 print("===============================================")
 print("End of the program. All your data is saved now. Goodbye!")
