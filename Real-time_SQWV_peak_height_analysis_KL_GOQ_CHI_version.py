@@ -46,7 +46,8 @@ f_label= "Freq (Hz)"
 In_label= "Signal"
 Ch_label= "Charge (C)"
 ####Styles##############
-color_choice=["red","blue","green","black","magenta","brown","violet","cyan"]
+color_choice=["red","blue","green","black","magenta","brown","violet","cyan","orange","gold","brown","orchid","gray","olive","darkred","darkblue","darkgreen","dimgrey","darkmagenta","darkgoldenrod","darkviolet","darkcyan","darkorange","darkorchid","darkgray","olivedrab"]
+#color_choice=["red","blue","green","black","magenta","brown","violet","cyan"]
 
 ##########################################################
 cls()
@@ -62,7 +63,7 @@ elec=input('Electrode number (e.g. 1, 2, 4) :\n ') or "1,2,3,4"
 if len(elec)>1:
     elec=np.sort(eval(elec))
 numelecs = len(elec)
-sqwvfreqs = input ('At least two Freqs in Hz (e.g. 50 , 300):\n') or "50,300" #"2, 5, 7,10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 160,  200, 300, 500, 800, 1000"
+sqwvfreqs = input ('At least two Freqs in Hz (e.g. 50 , 300):\n') or " 2, 5, 7,10, 15, 30,50, 70, 100,  200,250,  300, 600, 1000"
 KDM_Freqs= input('The two frequencies for KDM (e.g. 50,300):\n') or sqwvfreqs
 norm_point=input('Normalization point (e.g. 27 for 27th point:\n') or "1"
 norm_point=int(norm_point)
@@ -180,7 +181,7 @@ for f in range(tit_tot-1):
             E1 = -0.37; E2 = -0.19
         print('Your baseline: ' +str(E1)+' '+str(E2))
         input('Hit enter to continue')
-
+        plt.close()
 ###################Baseline Correction######################################
     peakcurrent=np.empty(numelecs)
     for h in range(numelecs):
@@ -235,7 +236,7 @@ for f in range(tit_tot-1):
                 else:
                     gofor="y"
                 if autosavebase==1:
-                    plt.savefig(electro_pic)
+                    plt.savefig("/baseline/"+electro_pic)
                 #Removed going back function
                 if gofor!='y':
                     try:
@@ -279,7 +280,7 @@ for f in range(tit_tot-1):
 
 #########Recording time of datafile########################################
     filename[f]=myfilename
-    filetime=(datetime.fromtimestamp(os.path.getctime(myfilename)))#getctime is for created time, getmtime is for modified time
+    filetime=(datetime.fromtimestamp(os.path.getmtime(myfilename)))#getctime is for created time, getmtime is for modified time
     if f==0:
         filetime0=filetime
     timediff=filetime-filetime0
@@ -301,7 +302,7 @@ for f in range(tit_tot-1):
             else:
                 plt.scatter(float(timedelta[f]),float(KDM[h,f]),color=color_choice[h])
                 plt.legend(loc="upper left")
-                plt.pause(0.00000001)
+                #plt.pause(0.00000001)
 plt.savefig("KDM_"+str(f_KDM_high)+"Hz-"+str(f_KDM_low)+"Hz")
 plt.show(block=False)
 
@@ -313,7 +314,7 @@ if brk==1:
     titlength=int(titlength-1)
 
 #######Plot Normalized Currents vs time not in real time
-fig1,axs1=plt.subplots(numelecs,sharex=True,constrained_layout=True, squeeze=False)
+fig1,axs1=plt.subplots(numelecs,sharex=True,figsize=(15,15), constrained_layout=True, squeeze=False)
 plt.xlabel(t_label)
 for h in range(numelecs):
     for k in range(numfreqs):
@@ -325,7 +326,7 @@ plt.savefig("NormI"+str(f_KDM_high)+"Hz-"+str(f_KDM_low)+"Hz")
 plt.show(block=False)
 
 ########Plot Charge vs Freq as time progresses not in real-time
-fig3,axs3=plt.subplots(numelecs,sharex=True,constrained_layout=True, squeeze=False)
+fig3,axs3=plt.subplots(numelecs,sharex=True,figsize=(15,15), constrained_layout=True, squeeze=False)
 plt.xlabel(f_label)
 for h in range(numelecs):
     for f in range(titlength):
@@ -337,18 +338,27 @@ plt.savefig("Charge_vs_Freq_Map")
 plt.show(block=False)
 
 ######Saving Calculated Data in txt files###
-####Textfile1. Time, KDM Freqs Raw Frequencies +Normalized
+####Textfile1. Time, KDM Freqs+Normalized
 for h in range(numelecs):
     #t_vs_raw_I_file="E"+elec[h]+"_t_vs_Ipk_"+freqstring+"Hz.txt"
     t_vs_I_file="E"+str(elec[h])+"_t_vs_Ipk_"+str(KDM_Freqs[-1])+"Hz-"+str(KDM_Freqs[0])+"Hz.txt"
     textfile1=open(t_vs_I_file, "w")
     #Write header
     textfile1.write("Time(min)"+"\tKDM_no_avg\tKDM\tRatio"+"\tI"+str(sqwvfreqs[KDM_hindex])+"(A)"+"\t"+"I"+str(sqwvfreqs[KDM_lindex])+"(A)"+"\t"+"I_norm"+str(sqwvfreqs[KDM_hindex])+"\tI_norm_"+str(sqwvfreqs[KDM_lindex])+"\n")
-    #I can't figure out how to put in all the frequencies in one file
     for f in range(titlength):
         textfile1.write(str(timedelta[f])+"\t"+str(Diff[h,f])+"\t"+str(KDM[h,f])+"\t"+str(Ratio[h,f])+"\t"+str(I_peak_array[h,KDM_lindex,f])+"\t"+str(I_peak_array[h,KDM_hindex,f])+"\t" +str(I_norm_array[h,KDM_lindex,f])+"\t"+str(I_norm_array[h,KDM_hindex,f])+ "\n")
     textfile1.close
-
+####Texfile1.1 Time, Average KDM, Ratio,etc. 
+mean_Diff=np.mean(Diff, axis=0)
+mean_KDM=np.mean(KDM, axis=0)
+mean_Ratio=np.mean(Ratio, axis=0)
+t_vs_I_file_avg="t_vs_Avg_KDM_Ratio_"+str(KDM_Freqs[-1])+"Hz-"+str(KDM_Freqs[0])+"Hz.txt"
+textfile1_1=open(t_vs_I_file_avg, "w")
+#Write header
+textfile1_1.write("Time(min)"+"\tKDM_no_avg\tKDM\tRatio"+"\n")
+for f in range(titlength):
+    textfile1_1.write(str(timedelta[f])+"\t"+str(mean_Diff[f])+"\t"+str(mean_KDM[f])+"\t"+str(mean_Ratio[f])+"\n")
+textfile1.close
 ####Textfile2. Charge vs Frequency 
 freqstring='Hz_'.join([str(elem) for elem in sqwvfreqs])
 freqheaderstr='\tCharge_'.join([str(elem) for elem in sqwvfreqs])
