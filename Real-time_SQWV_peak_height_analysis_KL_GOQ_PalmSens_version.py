@@ -197,7 +197,7 @@ for f in range(tit_tot-1):
                     basefit =np.polyfit([E_array[n,h,f][int(min1_index)],E_array[n,h,f][int(min2_index)]],[poly_y1, poly_y2],1);
                     baseline = np.polyval(basefit,E_peak)
                     y=y[int(min1_index):int(min2_index)+1]
-                    Peak_pot=E_array[n,h,f][int(np.argwhere(y==max(y)))+min1_index]
+                    Peak_pot=E_array[n,h,f][int(np.argwhere(y==max(y))[0])+min1_index+1]
                 else:
                     #Keeps the parameters the same within the while loop after the first frequency
                     peak= np.argwhere((E_array[n,h,f]>= E1n)&(E_array[n,h,f]<=E2n))#E_array points within E1 and E2
