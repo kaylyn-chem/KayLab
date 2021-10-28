@@ -81,8 +81,10 @@ I_peak_array=np.empty([numelecs,numfreqs,titlength])
 E_peak_array=np.empty([numelecs,numfreqs,titlength])
 I_charge_array=np.empty([numelecs,titlength,numfreqs])
 I_norm_freq_array=np.empty([numelecs,titlength,numfreqs])
+SC_norm_freq_array=np.empty([numelecs,titlength,numfreqs])
 E_peak_freq_array=np.empty([numelecs,titlength,numfreqs])
 I_norm_array=np.empty([numelecs,numfreqs,titlength])
+SC_norm_array=np.empty([numelecs,numfreqs,titlength])
 I_init=np.empty([numelecs,numfreqs])
 
 Ratio=np.empty([numelecs,titlength])
@@ -251,14 +253,18 @@ for f in range(tit_tot-1):
             for i in range(norm_point):
                 for k in range(numfreqs):
                     I_norm_array[h,k,i]=I_peak_array[h,k,i]/I_init[h,k]
+                    SC_norm_array[h,k,i]=(I_norm_array[h,k,i]-1)*100
                     I_norm_freq_array[h,i,k]=I_peak_array[h,k,i]/I_init[h,k]
+                    SC_norm_freq_array[h,i,k]=(I_norm_freq_array[h,i,k]-1)*100
                 Diff[h,i]=(I_norm_array[h,KDM_hindex,i])-(I_norm_array[h,KDM_lindex,i])
                 Avg[h,i]=0.5*(I_norm_array[h,KDM_hindex,i]+I_norm_array[h,KDM_lindex,i])
                 KDM[h,i]=Diff[h,i]/Avg[h,i]
         elif f>np_index:
             for k in range(numfreqs):
                 I_norm_array[h,k,f]=I_peak_array[h,k,f]/I_init[h,k]
+                SC_norm_array[h,k,f]=(I_norm_array[h,k,f]-1)*100
                 I_norm_freq_array[h,f,k]=I_peak_array[h,k,f]/I_init[h,k]
+                SC_norm_freq_array[h,f,k]=(I_norm_freq_array[h,f,k]-1)*100
             Diff[h,f]=I_norm_array[h,KDM_hindex,f]-I_norm_array[h,KDM_lindex,f]
             Avg[h,f]=0.5*(I_norm_array[h,KDM_hindex,f]+I_norm_array[h,KDM_lindex,f])
             KDM[h,f]=Diff[h,f]/Avg[h,f]
@@ -371,6 +377,17 @@ for h in range(numelecs):
     textfile2.close
     with open(Ep_vs_Freq_file,"ab") as textfile2:
         np.savetxt(textfile2,E_peak_freq_array[h], delimiter="\t", newline="\n")
+####Textfile5. SC vs Frequency 
+freqstring='Hz_'.join([str(elem) for elem in sqwvfreqs])
+freqheaderstr='\tSC_'.join([str(elem) for elem in sqwvfreqs])
+
+for h in range(numelecs):
+    Sc_vs_Freq_file="E"+str(elec[h])+"_Signal_Change_vs_Freq"+freqstring+"Hz_.txt"
+    textfile2=open(Sc_vs_Freq_file,"w")
+    textfile2.write("SC_"+freqheaderstr+"\n")
+    textfile2.close
+    with open(Sc_vs_Freq_file,"ab") as textfile2:
+        np.savetxt(textfile2,SC_norm_freq_array[h], delimiter="\t", newline="\n")
 cls()
 print("===============================================")
 print("End of the program. All your data is saved now. Goodbye!")
