@@ -125,8 +125,8 @@ for f in range(tit_tot-1):
         ###Loops for Electrodes############################
         for h in range(numelecs):
             #If data has headers or not.
-            pot=np.loadtxt(myfilename,dtype='float', delimiter=',', skiprows=6, usecols=0,encoding='utf-16', comments="\ufeff")
-            Idif=np.loadtxt(myfilename,dtype='float',delimiter=',', skiprows=6, usecols=(2*(int(elec[h]))-1),comments="\ufeff",encoding='utf-16')
+            pot=np.loadtxt(myfilename,dtype='float', delimiter=',', skiprows=7, usecols=0,encoding='utf-16-le', comments="\ufeff")
+            Idif=np.loadtxt(myfilename,dtype='float',delimiter=',', skiprows=7, usecols=(2*(int(elec[h]))-1),comments="\ufeff",encoding='utf-16-le')
             ######Smoothing variables. WSZ is window size and must be odd numbers
             if sqwvfreqs[k]<100:
                 WSZ=3
