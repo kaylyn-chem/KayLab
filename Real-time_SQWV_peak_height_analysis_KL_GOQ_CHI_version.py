@@ -4,10 +4,11 @@ It works for one channel or multi channel. (Not multiplexers that generate files
 If you need help, go find Kaylyn or email kaylyn.leung@gmail.com
 """
 autobase=1###1 turns on autobase, 0 you check each baseline######
-autosavebase=0###1 all baseline images get saved as a png in path, 0 no images of the baseline are saved
+autosavebase=1###1 all baseline images get saved as a png in path, 0 no images of the baseline are saved
 import os
 import sys
 import time
+import platform
 from datetime import datetime
 import numpy as np
 import pandas as pd
@@ -58,12 +59,11 @@ if autobase==1:
     print('Automatic baseline has been turned on. To change autobase to 0')
 
 ###########Defining the electrodes to be analyzed, and numelecs as the total # of electrodes via inputs#####################################
-shell="a" or input("Anaconda or Ubuntu?(Type a or u):\n")
 elec=input('Electrode number (e.g. 1, 2, 4) :\n ') or "1,2,3,4"
 if len(elec)>1:
     elec=np.sort(eval(elec))
 numelecs = len(elec)
-sqwvfreqs = input ('At least two Freqs in Hz (e.g. 50 , 300):\n') or " 2, 5, 7,10, 15, 30,50, 70, 100,  200,250,  300, 600, 1000"
+sqwvfreqs = input ('At least two Freqs in Hz (e.g. 50 , 300):\n') or "  5, 7,10, 15, 30,50, 70, 100,  200,250,  300, 600, 1000"
 KDM_Freqs= input('The two frequencies for KDM (e.g. 50,300):\n') or sqwvfreqs
 norm_point=input('Normalization point (e.g. 27 for 27th point:\n') or "1"
 norm_point=int(norm_point)
@@ -77,13 +77,21 @@ tit_tot=int(tit_tot)+1
 titno=list(range(1,tit_tot))
 titlength=len(titno)
 name = input('Naming Prefix here:\n') or 'S1_'
-if 'u' in shell:
-    path=input('Just hit enter') or "/mnt/c/users/turmi/Documents/data_PD/ben/data2_Titration"
-#"/mnt/c/users/Kaylyn/Onedrive/data_analysis_PD/Python"
-if 'a' in shell:
-    path=input('Paste your file directory here:\n') or "C:\\Users\\turmi\Documents\data_PD\\ben\data2_titration"
+path=input('Paste your file directory here:\n') or "C:\\Users\\turmi\Documents\data_PD\\ben\data2_titration"
+if platform.system()=='Windows':
+    newpath=path
+    print('Using Windows')
+elif platform.system()=='Darwin':
+    newpath=path.replace('\\','/')
+    print('Using a Mac')
+else:
+    newpath=path.replace('\\','/')
+    newpath=newpath.replace('C:','/mnt/c')
+    print('Using Ubuntu or Linux')
+path=newpath
 os.chdir(path)
-
+if not os.path.exists("baseline"):
+    os.makedirs("baseline")  
 ###Array Building####
 filename=np.empty([titlength], dtype=object)
 filetime=np.empty([titlength], dtype=object)
@@ -110,10 +118,10 @@ for f in range(tit_tot-1):
     ##Loop for Frequencies
     for k in range(numfreqs):
         freq= str(sqwvfreqs[k])
-        if 'u' in shell:
-            myfilename=path+'/'+name+freq+'Hz__'+titpnt+'.txt'
-        if 'a' in shell:
+        if platform.system()=='Windows':
             myfilename=path+"\\"+name+freq+'Hz__'+titpnt+'.txt'
+        else:
+            myfilename=path+'/'+name+freq+'Hz__'+titpnt+'.txt'
         
         #####Stalls loop while waiting for file. Enables real-time analysis
         r=0
@@ -166,6 +174,7 @@ for f in range(tit_tot-1):
                axs[h,0].set_ylabel(I_label)
                axs[h,0].legend(['E'+str(elec[h])])
         print('press x to close')
+        plt.savefig("I_vs_V_all.png")
         plt.show(block=False)
 
 ###########Baseline determination###################/########################
@@ -236,7 +245,7 @@ for f in range(tit_tot-1):
                 else:
                     gofor="y"
                 if autosavebase==1:
-                    plt.savefig("/baseline/"+electro_pic)
+                    plt.savefig("baseline/"+electro_pic)
                 #Removed going back function
                 if gofor!='y':
                     try:
@@ -276,8 +285,6 @@ for f in range(tit_tot-1):
             Avg[h,f]=0.5*(I_norm_array[h,KDM_hindex,f]+I_norm_array[h,KDM_lindex,f])
             KDM[h,f]=Diff[h,f]/Avg[h,f]
         Ratio[h,f]=I_peak_array[h,KDM_hindex,f]/I_peak_array[h,KDM_lindex,f]
-
-
 #########Recording time of datafile########################################
     filename[f]=myfilename
     filetime=(datetime.fromtimestamp(os.path.getmtime(myfilename)))#getctime is for created time, getmtime is for modified time
@@ -304,7 +311,6 @@ for f in range(tit_tot-1):
                 plt.legend(loc="upper left")
                 #plt.pause(0.00000001)
 plt.savefig("KDM_"+str(f_KDM_high)+"Hz-"+str(f_KDM_low)+"Hz")
-plt.show(block=False)
 
 ####Deletes the last datapoint because there is nothing there
 if brk==1:
@@ -314,6 +320,7 @@ if brk==1:
     titlength=int(titlength-1)
 
 #######Plot Normalized Currents vs time not in real time
+freqstring='Hz_'.join([str(elem) for elem in sqwvfreqs])
 fig1,axs1=plt.subplots(numelecs,sharex=True,figsize=(15,15), constrained_layout=True, squeeze=False)
 plt.xlabel(t_label)
 for h in range(numelecs):
@@ -323,7 +330,6 @@ for h in range(numelecs):
     axs1[h,0].legend(loc="lower left",ncol=5)
 
 plt.savefig("NormI"+str(f_KDM_high)+"Hz-"+str(f_KDM_low)+"Hz")
-plt.show(block=False)
 
 ########Plot Charge vs Freq as time progresses not in real-time
 fig3,axs3=plt.subplots(numelecs,sharex=True,figsize=(15,15), constrained_layout=True, squeeze=False)
@@ -334,8 +340,8 @@ for h in range(numelecs):
     axs3[h,0].set_ylabel(Ch_label)
     axs3[h,0].set_xscale('log')
     axs3[h,0].legend(['E'+str(elec[h])],loc="upper right")
-plt.savefig("Charge_vs_Freq_Map")
-plt.show(block=False)
+plt.savefig("Charge_vs_Freq_Map"+freqstring+"Hz_")
+plt.savefig("Charge_vs_Freq_Map"+freqstring+"Hz_.svg",format='svg')
 
 ######Saving Calculated Data in txt files###
 ####Textfile1. Time, KDM Freqs+Normalized
@@ -349,18 +355,24 @@ for h in range(numelecs):
         textfile1.write(str(timedelta[f])+"\t"+str(Diff[h,f])+"\t"+str(KDM[h,f])+"\t"+str(Ratio[h,f])+"\t"+str(I_peak_array[h,KDM_lindex,f])+"\t"+str(I_peak_array[h,KDM_hindex,f])+"\t" +str(I_norm_array[h,KDM_lindex,f])+"\t"+str(I_norm_array[h,KDM_hindex,f])+ "\n")
     textfile1.close
 ####Texfile1.1 Time, Average KDM, Ratio,etc. 
+elecstring='_E'.join([str(elem) for elem in elec])
 mean_Diff=np.mean(Diff, axis=0)
 mean_KDM=np.mean(KDM, axis=0)
 mean_Ratio=np.mean(Ratio, axis=0)
-t_vs_I_file_avg="t_vs_Avg_KDM_Ratio_"+str(KDM_Freqs[-1])+"Hz-"+str(KDM_Freqs[0])+"Hz.txt"
+
+stdev_Diff=np.std(Diff, axis=0)
+stdev_KDM=np.std(KDM, axis=0)
+stdev_Ratio=np.std(Ratio, axis=0)
+
+
+t_vs_I_file_avg="E"+elecstring+"_t_vs_Avg_KDM_Ratio_"+str(KDM_Freqs[-1])+"Hz-"+str(KDM_Freqs[0])+"Hz.txt"
 textfile1_1=open(t_vs_I_file_avg, "w")
 #Write header
 textfile1_1.write("Time(min)"+"\tKDM_no_avg\tKDM\tRatio"+"\n")
 for f in range(titlength):
-    textfile1_1.write(str(timedelta[f])+"\t"+str(mean_Diff[f])+"\t"+str(mean_KDM[f])+"\t"+str(mean_Ratio[f])+"\n")
+    textfile1_1.write(str(timedelta[f])+"\t"+str(mean_Diff[f])+"\t"+str(stdev_Diff[f])+"\t "+str(mean_KDM[f])+"\t"+str(stdev_KDM[f])+"\t"+str(mean_Ratio[f])+"\t"+str(stdev_Ratio[f])+"\n")
 textfile1.close
 ####Textfile2. Charge vs Frequency 
-freqstring='Hz_'.join([str(elem) for elem in sqwvfreqs])
 freqheaderstr='\tCharge_'.join([str(elem) for elem in sqwvfreqs])
 
 for h in range(numelecs):
@@ -381,6 +393,34 @@ for h in range(numelecs):
     textfile2.close
     with open(In_vs_Freq_file,"ab") as textfile2:
         np.savetxt(textfile2,I_norm_freq_array[h], delimiter="\t")
+####Textfile4. Avg Inorm vs Frequency 
+mean_Inorm=np.mean(I_norm_freq_array, axis=0)
+freqheaderstr='\tI_norm_avg_'.join([str(elem) for elem in sqwvfreqs])
+In_vs_avg_Freq_file="E"+elecstring+"Avg"+"In_vs_Freq"+freqstring+"Hz_.txt"
+textfile2=open(In_vs_avg_Freq_file,"w")
+textfile2.write("I_norm_avg"+freqheaderstr+"\n")
+textfile2.close
+with open(In_vs_avg_Freq_file,"ab") as textfile2:
+    np.savetxt(textfile2,mean_Inorm, delimiter="\t")
+
+#######Textfile5. STD Inorm vs Frequency
+stdev_Inorm=np.std(I_norm_freq_array, axis=0)
+freqheaderstr='\tI_norm_std_'.join([str(elem) for elem in sqwvfreqs])
+In_vs_std_Freq_file="E"+elecstring+"Std"+"In_vs_Freq"+freqstring+"Hz_.txt"
+textfile2=open(In_vs_std_Freq_file,"w")
+textfile2.write("I_norm_std"+freqheaderstr+"\n")
+textfile2.close
+with open(In_vs_std_Freq_file,"ab") as textfile2:
+    np.savetxt(textfile2,stdev_Inorm, delimiter="\t")
+########### Plotting Inormvs_Freq     
+plt.figure()
+for k in range(numfreqs):
+    plt.errorbar(timedelta,mean_Inorm[:,k],stdev_Inorm[:,k],fmt='-o',color=str(color_choice[k]),ecolor=str(color_choice[k]), capsize=5, label=str(sqwvfreqs[k])+'Hz')
+plt.legend(loc='lower left', ncol=5)
+plt.xlabel(t_label)
+plt.ylabel("Signal")
+plt.ylim(0, 1.2)
+plt.savefig("E"+elecstring+"Avg_norm_I.png")
 cls()
 print("===============================================")
 print("End of the program. All your data is saved now. Goodbye!")
